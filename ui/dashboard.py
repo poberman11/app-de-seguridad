@@ -62,9 +62,9 @@ class DashboardWindow(QMainWindow):
         self.btn_lock.clicked.connect(self.lock_screen)
         self.btn_settings.clicked.connect(lambda: self.load_view("config", ConfigView))
         self.btn_passwords.clicked.connect(lambda: self.load_view("passwords", PasswordsView))
-        self.btn_busqueda.clicked.connect(lambda: self.load_view("busqueda", FileSearchView))
-        self.btn_programas.clicked.connect(lambda: self.load_view("programas", ProgramsView))
-
+        self.btn_filesearch.clicked.connect(lambda: self.load_view("busqueda", FileSearchView))
+        self.btn_programs.clicked.connect(lambda: self.load_view("programas", ProgramsView))
+        # 🔧 Nota: falta conectar btn_games cuando esté lista su vista
 
     def load_view(self, key, view_class):
         if key not in self.views:
