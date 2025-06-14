@@ -12,29 +12,6 @@ def init_config_table():
         ''')
         conn.commit()
 
-def init_shortcuts_tables():
-    with sqlite3.connect(DB_FILE) as conn:
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS main_shortcuts (
-                id INTEGER PRIMARY KEY,
-                nombre TEXT,
-                ruta TEXT
-            )
-        """)
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS games (
-                id INTEGER PRIMARY KEY,
-                nombre TEXT,
-                ruta TEXT
-            )
-        """)
-        for tabla in ("main_shortcuts", "games"):
-            for i in range(1, 9):
-                conn.execute(f"""
-                    INSERT OR IGNORE INTO {tabla} (id, nombre, ruta) VALUES (?, ?, ?)
-                """, (i, f"{tabla}_{i}", ""))
-        conn.commit()
-
 
 def set_path(key: str, path: str):
     with sqlite3.connect(DB_FILE) as conn:
