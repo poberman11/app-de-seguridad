@@ -9,6 +9,7 @@ from ui.config_view import ConfigView
 from ui.passwords_view import PasswordsView
 from ui.search_view import FileSearchView
 from ui.programs_view import ProgramsView
+from ui.games_view import GamesView
 
 class DashboardWindow(QMainWindow):
     def __init__(self):
@@ -64,8 +65,9 @@ class DashboardWindow(QMainWindow):
         self.btn_passwords.clicked.connect(lambda: self.load_view("passwords", PasswordsView))
         self.btn_filesearch.clicked.connect(lambda: self.load_view("busqueda", FileSearchView))
         self.btn_programs.clicked.connect(lambda: self.load_view("programas", ProgramsView))
-        # 🔧 Nota: falta conectar btn_games cuando esté lista su vista
+        self.btn_games.clicked.connect(lambda: self.load_view("games", GamesView))
 
+    
     def load_view(self, key, view_class):
         if key not in self.views:
             self.views[key] = view_class()
