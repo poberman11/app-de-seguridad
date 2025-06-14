@@ -5,6 +5,7 @@ from PySide6.QtWidgets import (
     QPushButton, QMessageBox, QFileDialog, QListWidget
 )
 from database.auth import register_user, connect
+from database.config import set_path, get_path, get_all_paths
 
 class ConfigView(QWidget):
     def __init__(self):
@@ -56,6 +57,7 @@ class ConfigView(QWidget):
             btn.clicked.connect(lambda _, idx=i: self.select_path(idx, "prog"))
             self.layout.addWidget(btn)
             self.btns_config.append(btn)
+        self.load_saved_paths()
 
         # === Ayuda ===
         self.btn_help = QPushButton("Ayuda (Discord)")
@@ -97,11 +99,21 @@ class ConfigView(QWidget):
             self.load_users()
 
     def select_path(self, index, tipo):
-        path, _ = QFileDialog.getOpenFileName(self, "Selecciona una app o juego")
-        if path:
-            self.paths[f"{tipo}_{index}"] = path
-            QMessageBox.information(self, "Guardado", f"Ruta guardada para {tipo} #{index+1}")
+    path, _ = QFileDialog.getOpenFileName(self, "Selecciona una app o juego")
+    if path:
+        set_path(f"{tipo}_{index}", path)
+        QMessageBox.information(self, "Guardado", f"Ruta guardada para {tipo} #{index+1}")
+        self.load_saved_paths()
 
     def open_help(self):
         import webbrowser
         webbrowser.open("https://discord.com/")  # <-- Cambia por tu link real
+        
+    def load_saved_paths(self):
+    saved = get_all_paths()
+    for key, path in saved.items():
+        index = int(key.split("_")[1])
+        tipo = key.split("_")[0]
+        label = "Juego" if tipo == "game" else "Programa"
+        self.btns_config[index + (0 if tipo == "game" else 8)].setText(f"{label} #{index+1}: {os.path.basename(path)}")
+
