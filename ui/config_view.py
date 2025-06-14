@@ -1,119 +1,106 @@
-# ui/config_view.py
-import os
+# === ui/config_view.py ===
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
-    QPushButton, QMessageBox, QFileDialog, QListWidget
+    QWidget, QVBoxLayout, QLabel, QLineEdit, QPushButton, QFileDialog,
+    QTabWidget, QGridLayout, QHBoxLayout, QMessageBox
 )
-from database.auth import register_user, connect
-from database.config import set_path, get_path, get_all_paths
+from PySide6.QtGui import QIcon
+from database.auth import add_user, remove_user, get_users
+from database.shortcuts import get_shortcuts, update_shortcut
+import os
+import win32gui
 
 class ConfigView(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Configuración")
-        self.layout = QVBoxLayout()
+        self.resize(700, 500)
 
-        # === Usuarios ===
-        self.label_user = QLabel("Agregar nuevo usuario")
-        self.input_user = QLineEdit()
-        self.input_user.setPlaceholderText("Usuario")
+        layout = QVBoxLayout(self)
+        tabs = QTabWidget()
 
-        self.input_pass = QLineEdit()
-        self.input_pass.setPlaceholderText("Contraseña")
-        self.input_pass.setEchoMode(QLineEdit.Password)
+        tabs.addTab(self._usuarios_tab(), "Usuarios")
+        tabs.addTab(self._shortcuts_tab("main_shortcuts"), "Menú principal")
+        tabs.addTab(self._shortcuts_tab("programs"), "Programas")
+        tabs.addTab(self._shortcuts_tab("games"), "Juegos")
 
-        self.btn_add_user = QPushButton("Agregar usuario")
-        self.btn_add_user.clicked.connect(self.add_user)
+        layout.addWidget(tabs)
 
-        self.layout.addWidget(self.label_user)
-        self.layout.addWidget(self.input_user)
-        self.layout.addWidget(self.input_pass)
-        self.layout.addWidget(self.btn_add_user)
+    def _usuarios_tab(self):
+        widget = QWidget()
+        layout = QVBoxLayout(widget)
 
-        # === Eliminar usuario ===
-        self.label_del = QLabel("Eliminar usuario")
-        self.user_list = QListWidget()
-        self.load_users()
+        self.user_input = QLineEdit()
+        self.pass_input = QLineEdit()
+        self.pass_input.setEchoMode(QLineEdit.Password)
+        layout.addWidget(QLabel("Nuevo usuario"))
+        layout.addWidget(self.user_input)
+        layout.addWidget(QLabel("Nueva contraseña"))
+        layout.addWidget(self.pass_input)
 
-        self.btn_delete = QPushButton("Eliminar seleccionado")
-        self.btn_delete.clicked.connect(self.delete_selected_user)
+        btn_add = QPushButton("Agregar usuario")
+        btn_add.clicked.connect(self._agregar_usuario)
+        layout.addWidget(btn_add)
 
-        self.layout.addWidget(self.label_del)
-        self.layout.addWidget(self.user_list)
-        self.layout.addWidget(self.btn_delete)
+        self.remove_user_input = QLineEdit()
+        layout.addWidget(QLabel("Eliminar usuario"))
+        layout.addWidget(self.remove_user_input)
 
-        # === Configuración de accesos rápidos ===
-        self.paths = {}
-        self.btns_config = []
+        btn_remove = QPushButton("Eliminar usuario")
+        btn_remove.clicked.connect(self._eliminar_usuario)
+        layout.addWidget(btn_remove)
 
-        for i in range(8):
-            btn = QPushButton(f"Ruta Juego #{i+1}")
-            btn.clicked.connect(lambda _, idx=i: self.select_path(idx, "game"))
-            self.layout.addWidget(btn)
-            self.btns_config.append(btn)
+        return widget
 
-        for i in range(8):
-            btn = QPushButton(f"Ruta Programa #{i+1}")
-            btn.clicked.connect(lambda _, idx=i: self.select_path(idx, "prog"))
-            self.layout.addWidget(btn)
-            self.btns_config.append(btn)
-        self.load_saved_paths()
+    def _shortcuts_tab(self, table):
+        widget = QWidget()
+        grid = QGridLayout(widget)
 
-        # === Ayuda ===
-        self.btn_help = QPushButton("Ayuda (Discord)")
-        self.btn_help.clicked.connect(self.open_help)
-        self.layout.addWidget(self.btn_help)
+        self.shortcut_inputs = {}
 
-        self.setLayout(self.layout)
+        shortcuts = get_shortcuts(table)
+        for i, (id_, nombre, ruta) in enumerate(shortcuts):
+            name_input = QLineEdit(nombre)
+            path_input = QLineEdit(ruta)
+            btn_file = QPushButton("...")
+            btn_file.clicked.connect(lambda _, i=i, p=path_input: self._explorar_archivo(i, p))
+            btn_save = QPushButton("Guardar")
+            btn_save.clicked.connect(lambda _, t=table, i=id_, n=name_input, p=path_input: self._guardar_acceso(t, i, n, p))
 
-    def add_user(self):
-        user = self.input_user.text()
-        pwd = self.input_pass.text()
-        if user and pwd:
-            if register_user(user, pwd):
-                QMessageBox.information(self, "Éxito", "Usuario creado")
-                self.load_users()
-                self.input_user.clear()
-                self.input_pass.clear()
-            else:
-                QMessageBox.warning(self, "Error", "Ese usuario ya existe")
+            grid.addWidget(QLabel(f"Acceso {i+1}"), i, 0)
+            grid.addWidget(name_input, i, 1)
+            grid.addWidget(path_input, i, 2)
+            grid.addWidget(btn_file, i, 3)
+            grid.addWidget(btn_save, i, 4)
+
+        return widget
+
+    def _agregar_usuario(self):
+        usuario = self.user_input.text()
+        clave = self.pass_input.text()
+        if usuario and clave:
+            add_user(usuario, clave)
+            QMessageBox.information(self, "Listo", "Usuario creado")
         else:
             QMessageBox.warning(self, "Error", "Completa usuario y contraseña")
 
-    def load_users(self):
-        self.user_list.clear()
-        conn = connect()
-        cursor = conn.cursor()
-        cursor.execute("SELECT username FROM users")
-        for (user,) in cursor.fetchall():
-            self.user_list.addItem(user)
+    def _eliminar_usuario(self):
+        usuario = self.remove_user_input.text()
+        if usuario:
+            remove_user(usuario)
+            QMessageBox.information(self, "Listo", f"Usuario eliminado: {usuario}")
+        else:
+            QMessageBox.warning(self, "Error", "Ingresa el usuario a eliminar")
 
-    def delete_selected_user(self):
-        item = self.user_list.currentItem()
-        if item:
-            username = item.text()
-            conn = connect()
-            conn.execute("DELETE FROM users WHERE username = ?", (username,))
-            conn.commit()
-            QMessageBox.information(self, "Eliminado", f"Usuario {username} eliminado.")
-            self.load_users()
+    def _explorar_archivo(self, idx, input_path):
+        archivo, _ = QFileDialog.getOpenFileName(self, "Selecciona archivo ejecutable", os.getenv("USERPROFILE"), "Aplicaciones (*.exe)")
+        if archivo:
+            input_path.setText(archivo)
 
-    def select_path(self, index, tipo):
-    path, _ = QFileDialog.getOpenFileName(self, "Selecciona una app o juego")
-    if path:
-        set_path(f"{tipo}_{index}", path)
-        QMessageBox.information(self, "Guardado", f"Ruta guardada para {tipo} #{index+1}")
-        self.load_saved_paths()
-
-    def open_help(self):
-        import webbrowser
-        webbrowser.open("https://discord.com/")  # <-- Cambia por tu link real
-        
-    def load_saved_paths(self):
-    saved = get_all_paths()
-    for key, path in saved.items():
-        index = int(key.split("_")[1])
-        tipo = key.split("_")[0]
-        label = "Juego" if tipo == "game" else "Programa"
-        self.btns_config[index + (0 if tipo == "game" else 8)].setText(f"{label} #{index+1}: {os.path.basename(path)}")
-
+    def _guardar_acceso(self, tabla, id_, name_input, path_input):
+        nombre = name_input.text()
+        ruta = path_input.text()
+        if nombre and ruta:
+            update_shortcut(tabla, id_, nombre, ruta)
+            QMessageBox.information(self, "Guardado", f"Acceso actualizado en {tabla}")
+        else:
+            QMessageBox.warning(self, "Error", "Debes llenar nombre y ruta")
