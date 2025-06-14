@@ -8,6 +8,7 @@ from PySide6.QtCore import Qt
 from ui.config_view import ConfigView
 from ui.passwords_view import PasswordsView
 from ui.search_view import FileSearchView
+from ui.programs_view import ProgramsView
 
 class DashboardWindow(QMainWindow):
     def __init__(self):
@@ -62,6 +63,7 @@ class DashboardWindow(QMainWindow):
         self.btn_settings.clicked.connect(lambda: self.load_view("config", ConfigView))
         self.btn_passwords.clicked.connect(lambda: self.load_view("passwords", PasswordsView))
         self.btn_busqueda.clicked.connect(lambda: self.load_view("busqueda", FileSearchView))
+        self.btn_programas.clicked.connect(lambda: self.load_view("programas", ProgramsView))
 
 
     def load_view(self, key, view_class):
