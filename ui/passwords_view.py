@@ -1,85 +1,47 @@
-# ui/passwords_view.py
-from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLineEdit,
-    QPushButton, QMessageBox, QListWidget, QLabel
-)
-from database.passwords import add_password, get_passwords
-from database.auth import validate_user
+# === ui/passwords_view.py ===
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QTableWidget, QTableWidgetItem, QPushButton, QLineEdit, QLabel
+from database.passwords import add_password, get_passwords, load_key
 
 class PasswordsView(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Gestión de Contraseñas")
-        self.layout = QVBoxLayout()
-        self.setLayout(self.layout)
+        self.setWindowTitle("Gestor de Contraseñas")
 
-        # === Autenticación ===
-        self.auth_user = QLineEdit()
-        self.auth_user.setPlaceholderText("Usuario")
-        self.auth_pass = QLineEdit()
-        self.auth_pass.setPlaceholderText("Contraseña")
-        self.auth_pass.setEchoMode(QLineEdit.Password)
+        layout = QVBoxLayout()
 
-        self.auth_btn = QPushButton("Entrar")
-        self.auth_btn.clicked.connect(self.auth)
+        # === Tabla de contraseñas ===
+        self.table = QTableWidget()
+        self.table.setColumnCount(1)
+        self.table.setHorizontalHeaderLabels(["Contraseña"])
+        layout.addWidget(self.table)
 
-        self.layout.addWidget(QLabel("Ingresa usuario y contraseña para acceder:"))
-        self.layout.addWidget(self.auth_user)
-        self.layout.addWidget(self.auth_pass)
-        self.layout.addWidget(self.auth_btn)
+        # === Botón Mostrar ===
+        self.btn_mostrar = QPushButton("Mostrar")
+        self.btn_mostrar.clicked.connect(self.mostrar_passwords)
+        layout.addWidget(self.btn_mostrar)
 
-        # === Área protegida (oculta al principio) ===
-        self.password_list = QListWidget()
-        self.password_input = QLineEdit()
-        self.password_input.setPlaceholderText("Nueva contraseña")
+        # === Ingreso de nueva contraseña ===
+        ingreso_layout = QHBoxLayout()
+        ingreso_layout.addWidget(QLabel("Nueva contraseña:"))
+        self.input_password = QLineEdit()
+        ingreso_layout.addWidget(self.input_password)
+        self.btn_guardar = QPushButton("Guardar")
+        self.btn_guardar.clicked.connect(self.guardar_password)
+        ingreso_layout.addWidget(self.btn_guardar)
 
-        self.btn_save = QPushButton("Guardar")
-        self.btn_show = QPushButton("Mostrar")
+        layout.addLayout(ingreso_layout)
+        self.setLayout(layout)
 
-        self.btn_save.clicked.connect(self.save_password)
-        self.btn_show.clicked.connect(self.show_passwords)
+    def mostrar_passwords(self):
+        self.table.setRowCount(0)
+        passwords = get_passwords()
+        for row, pw in enumerate(passwords):
+            self.table.insertRow(row)
+            self.table.setItem(row, 0, QTableWidgetItem(pw))
 
-        self.protected_area = QVBoxLayout()
-        self.protected_area.addWidget(QLabel("Contraseñas guardadas:"))
-        self.protected_area.addWidget(self.password_list)
-
-        self.input_area = QHBoxLayout()
-        self.input_area.addWidget(self.password_input)
-        self.input_area.addWidget(self.btn_save)
-
-        self.protected_area.addLayout(self.input_area)
-        self.protected_area.addWidget(self.btn_show)
-
-        # Contenedor
-        self.protected_container = QWidget()
-        self.protected_container.setLayout(self.protected_area)
-        self.layout.addWidget(self.protected_container)
-
-        self.protected_container.setVisible(False)
-        self.current_user = None
-
-    def auth(self):
-        user = self.auth_user.text()
-        pwd = self.auth_pass.text()
-        if validate_user(user, pwd):
-            self.current_user = user
-            self.auth_user.setEnabled(False)
-            self.auth_pass.setEnabled(False)
-            self.auth_btn.setEnabled(False)
-            self.protected_container.setVisible(True)
-        else:
-            QMessageBox.warning(self, "Acceso denegado", "Usuario o contraseña incorrectos")
-
-    def save_password(self):
-        pwd = self.password_input.text()
-        if pwd:
-            add_password(self.current_user, pwd)
-            self.password_input.clear()
-            self.show_passwords()
-        else:
-            QMessageBox.warning(self, "Error", "Ingresa una contraseña para guardar")
-
-    def show_passwords(self):
-        self.password_list.clear()
-        for p in get_passwords(self.current_user):
-            self.password_list.addItem(p)
+    def guardar_password(self):
+        pw = self.input_password.text().strip()
+        if pw:
+            add_password(pw)
+            self.input_password.clear()
+            self.mostrar_passwords()
