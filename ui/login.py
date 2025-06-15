@@ -5,6 +5,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtGui import QFont
 from database.auth import user_exists, register_user, validate_login
+from PySide6.QtCore import Qt
 
 class LoginWindow(QWidget):
     def __init__(self):
@@ -76,9 +77,13 @@ class LoginWindow(QWidget):
             QMessageBox.warning(self, "Error", "Debes ingresar usuario y contraseña.")
 
     def accepted(self):
-        # Aquí abrirías la ventana principal y cerrarías el login
         from ui.dashboard import DashboardWindow
         self.dashboard = DashboardWindow()
-        self.dashboard.showFullScreen()
-        self.close()
 
+        # Restaurar ventana antes de mostrar
+        self.dashboard.showMaximized()
+        self.dashboard.setWindowFlag(Qt.FramelessWindowHint, False)
+        self.dashboard.setWindowFlag(Qt.WindowStaysOnTopHint, False)
+        self.dashboard.show()  # o showMaximized() si prefieres
+
+        self.close()
