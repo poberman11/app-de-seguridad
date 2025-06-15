@@ -1,6 +1,6 @@
 from cryptography.fernet import Fernet
 import sqlite3, os
-from database.auth import DB_FILE
+from config.settings import DB_PATH
 
 KEY_FILE = "secret.key"
 
@@ -14,7 +14,7 @@ def load_key():
 fernet = Fernet(load_key())
 
 def init_password_table():
-    with sqlite3.connect(DB_FILE) as conn:
+    with sqlite3.connect(DB_PATH) as conn:
         conn.execute("""
             CREATE TABLE IF NOT EXISTS passwords (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -25,11 +25,11 @@ def init_password_table():
 
 def add_password(password):
     encrypted = fernet.encrypt(password.encode())
-    with sqlite3.connect(DB_FILE) as conn:
+    with sqlite3.connect(DB_PATH) as conn:
         conn.execute("INSERT INTO passwords (password) VALUES (?)", (encrypted,))
         conn.commit()
 
 def get_passwords():
-    with sqlite3.connect(DB_FILE) as conn:
+    with sqlite3.connect(DB_PATH) as conn:
         cursor = conn.execute("SELECT password FROM passwords")
         return [fernet.decrypt(row[0]).decode() for row in cursor.fetchall()]

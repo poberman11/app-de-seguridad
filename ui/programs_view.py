@@ -1,7 +1,7 @@
 # ui/programs_view.py
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QPushButton, QGridLayout, QMessageBox
 import subprocess
-from database.programs import get_programs
+from database.shortcuts import get_shortcuts, update_shortcut
 
 class ProgramsView(QWidget):
     def __init__(self):
@@ -14,7 +14,7 @@ class ProgramsView(QWidget):
         layout.addLayout(self.grid)
 
         self.botones = []
-        self.programas = get_programs()
+        self.programas = get_shortcuts("programs")
 
         for i, (id, nombre, ruta) in enumerate(self.programas):
             btn = QPushButton(nombre)

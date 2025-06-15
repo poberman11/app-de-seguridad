@@ -1,11 +1,11 @@
 # === database/shortcuts.py ===
 import sqlite3
-from database.auth import DB_FILE
+from config.settings import DB_PATH
 
 # Inicializar las 3 tablas de accesos
 
 def init_shortcuts_tables():
-    with sqlite3.connect(DB_FILE) as conn:
+    with sqlite3.connect(DB_PATH) as conn:
         conn.execute("""
             CREATE TABLE IF NOT EXISTS main_shortcuts (
                 id INTEGER PRIMARY KEY,
@@ -37,13 +37,13 @@ def init_shortcuts_tables():
 
 # Obtener los accesos de cada tabla
 def get_shortcuts(tabla):
-    with sqlite3.connect(DB_FILE) as conn:
+    with sqlite3.connect(DB_PATH) as conn:
         cursor = conn.execute(f"SELECT id, nombre, ruta FROM {tabla}")
         return cursor.fetchall()
 
 # Actualizar un acceso
 def update_shortcut(tabla, id, nombre, ruta):
-    with sqlite3.connect(DB_FILE) as conn:
+    with sqlite3.connect(DB_PATH) as conn:
         conn.execute(f"UPDATE {tabla} SET nombre = ?, ruta = ? WHERE id = ?", (nombre, ruta, id))
         conn.commit()
 

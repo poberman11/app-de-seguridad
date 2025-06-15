@@ -36,3 +36,17 @@ def validate_login(username, password):
     if row:
         return check_password(password, row[0])
     return False
+
+def get_users():
+    conn = connect()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, username FROM users")
+    return cursor.fetchall()
+
+def add_user(username, password):
+    return register_user(username, password)
+
+def remove_user(user_id):
+    conn = connect()
+    conn.execute("DELETE FROM users WHERE id = ?", (user_id,))
+    conn.commit()

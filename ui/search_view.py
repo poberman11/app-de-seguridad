@@ -3,7 +3,7 @@ from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLineEdit,
     QPushButton, QListWidget, QMessageBox, QLabel, QFileDialog
 )
-from database.auth import validate_user
+from database.auth import validate_login
 from utils.search_files import buscar_archivos
 
 class FileSearchView(QWidget):
@@ -67,7 +67,7 @@ class FileSearchView(QWidget):
     def auth(self):
         user = self.auth_user.text()
         pwd = self.auth_pass.text()
-        if validate_user(user, pwd):
+        if validate_login(user, pwd):
             self.current_user = user
             self.auth_user.setEnabled(False)
             self.auth_pass.setEnabled(False)

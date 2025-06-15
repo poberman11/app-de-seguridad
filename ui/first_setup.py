@@ -5,7 +5,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtGui import QFont
 from PySide6.QtCore import Qt
 
-from database.auth import crear_usuario
+from database.auth import register_user
 from ui.dashboard import DashboardWindow
 
 
@@ -48,7 +48,7 @@ class FirstSetupWindow(QWidget):
             return
 
         try:
-            crear_usuario(usuario, contraseña)
+            register_user(usuario, contraseña)
             QMessageBox.information(self, "Usuario creado", "El usuario se ha creado correctamente.")
             self.abrir_dashboard()
         except Exception as e:

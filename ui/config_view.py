@@ -7,7 +7,12 @@ from PySide6.QtGui import QIcon
 from database.auth import add_user, remove_user, get_users
 from database.shortcuts import get_shortcuts, update_shortcut
 import os
-import win32gui
+import sys
+if sys.platform.startswith("win"):
+    import win32gui
+else:
+    win32gui = None  # o usa un valor dummy si vas a llamar funciones
+
 
 class ConfigView(QWidget):
     def __init__(self):
